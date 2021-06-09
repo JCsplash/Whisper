@@ -9,7 +9,7 @@ let whistleFactory = WhistleFactory()
 
 open class WhistleFactory: UIViewController {
 
-  open lazy var whistleWindow: UIWindow = UIWindow()
+  open var whistleWindow: UIWindow?
 
   public struct Dimensions {
     static var notchHeight: CGFloat {
@@ -77,7 +77,6 @@ open class WhistleFactory: UIViewController {
     titleLabel.font = murmur.font
     titleLabel.textColor = murmur.titleColor
     view.backgroundColor = murmur.backgroundColor
-    whistleWindow.backgroundColor = murmur.backgroundColor
 
     moveWindowToFront()
     setupFrames()
@@ -93,12 +92,14 @@ open class WhistleFactory: UIViewController {
   // MARK: - Setup
 
   open func setupWindow() {
+    guard let whistleWindow = whistleWindow else { return }
     whistleWindow.addSubview(self.view)
     whistleWindow.clipsToBounds = true
     moveWindowToFront()
   }
 
   func moveWindowToFront() {
+    guard let whistleWindow = whistleWindow else { return }
     whistleWindow.windowLevel = view.isiPhoneX ? UIWindow.Level.normal : UIWindow.Level.statusBar
     setNeedsStatusBarAppearanceUpdate()
   }
@@ -109,6 +110,7 @@ open class WhistleFactory: UIViewController {
 
   open func setupFrames() {
     whistleWindow = UIWindow()
+    guard let whistleWindow = whistleWindow else { return }
 
     setupWindow()
 
@@ -155,6 +157,7 @@ open class WhistleFactory: UIViewController {
 
   public func present() {
     hideTimer.invalidate()
+    guard let whistleWindow = whistleWindow else { return }
 
     if UIApplication.shared.keyWindow != whistleWindow {
       previousKeyWindow = UIApplication.shared.keyWindow
@@ -164,18 +167,18 @@ open class WhistleFactory: UIViewController {
     whistleWindow.frame.origin.y = initialOrigin - titleLabelHeight - Dimensions.notchHeight
     whistleWindow.isHidden = false
     UIView.animate(withDuration: 0.2, animations: {
-      self.whistleWindow.frame.origin.y = initialOrigin
+      self.whistleWindow?.frame.origin.y = initialOrigin
     })
   }
 
   public func hide() {
     let finalOrigin = view.frame.origin.y - titleLabelHeight - Dimensions.notchHeight
     UIView.animate(withDuration: 0.2, animations: {
-      self.whistleWindow.frame.origin.y = finalOrigin
+      self.whistleWindow?.frame.origin.y = finalOrigin
       }, completion: { _ in
         if let window = self.previousKeyWindow {
           window.isHidden = false
-          self.whistleWindow.windowLevel = UIWindow.Level.normal - 1
+          self.whistleWindow = nil
           self.previousKeyWindow = nil
           window.rootViewController?.setNeedsStatusBarAppearanceUpdate()
         }
@@ -194,6 +197,7 @@ open class WhistleFactory: UIViewController {
   }
 
     @objc func orientationDidChange() {
+    guard let whistleWindow = whistleWindow else { return }
     if whistleWindow.isKeyWindow {
       setupFrames()
       hide()
